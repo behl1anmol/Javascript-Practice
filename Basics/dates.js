@@ -4,13 +4,13 @@ console.log(`${date1}`);
 let date2 = new Date("September 14, 2024");
 console.log(date2);
 
-let date3 = new Date();//now
+let date3 = new Date(); //now
 console.log(date3);
 
 let date4 = new Date("2024-09-14T02:30:04.312+05:30");
 console.log(date4);
 
-let date5 = new Date(2024,0,14,2,30,4);
+let date5 = new Date(2024, 0, 14, 2, 30, 4);
 console.log(date5);
 
 //accessing elements of date
