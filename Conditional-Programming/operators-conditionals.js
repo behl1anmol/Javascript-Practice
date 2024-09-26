@@ -79,6 +79,8 @@ let val22 = "42" == 42;
 let val23 = "42" === 42;
 console.log(`val22: ${val22} val23: ${val23}`);
 
+// eslint-disable-next-line no-constant-binary-expression
 let val24 = undefined == null;
+// eslint-disable-next-line no-constant-binary-expression
 let val25 = undefined === null;
 console.log(`val24: ${val24} val25: ${val25}`);
