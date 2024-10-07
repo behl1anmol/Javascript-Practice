@@ -28,6 +28,17 @@ function getInput(promptText, validator, transformer) {
 
 // Validater function -----------------------------
 
+//Higher order function
+const isIntegerValid = (min, max) => {
+  return (input) => {
+    let numValue = Number(input);
+    if (!Number.isInteger(numValue) || numValue < min || numValue > max) {
+      return false;
+    }
+    return true;
+  };
+};
+
 const isStringInputValid = (input) => (input ? true : false);
 
 const isEnumInputValid = (input) => {
@@ -100,15 +111,18 @@ function getUserInputEmployeeDetails() {
 
   let startDateYear = getInput(
     "Employee Start Year (1990-2023): ",
-    isDateValid
+    isIntegerValid(1990, 2023)
   );
 
   let startDateMonth = getInput(
     "Employee Start Date Month (1-12): ",
-    isDateValid
+    isIntegerValid(1, 12)
   );
 
-  let startDateDay = getInput("Employee Start Date Day (1-31): ", isDateValid);
+  let startDateDay = getInput(
+    "Employee Start Date Day (1-31): ",
+    isIntegerValid(1, 31)
+  );
 
   let isActive = getInput(
     "Is employee active (0 or 1): ",
