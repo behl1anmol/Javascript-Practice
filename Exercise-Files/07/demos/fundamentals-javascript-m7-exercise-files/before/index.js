@@ -4,6 +4,51 @@ import employees from "./data.json" assert { type: "json" };
 import createPrompt from "prompt-sync";
 let prompt = createPrompt();
 
+//an arrow function to log the employee object using Object entries and foreach(similar to foreach in)
+const logEmployee = (employee) => {
+  Object.entries(employee).forEach((entry) => {
+    console.log(`${entry[0]} : ${entry[1]}`);
+  });
+};
+
+function getInput(promptText, validator, transformer) {
+  let value = prompt(promptText);
+
+  if (validator && !validator(value)) {
+    console.error(`--Invalid Input`);
+    process.exit(1);
+  }
+
+  if (transformer) {
+    return transformer(value);
+  }
+
+  return value;
+}
+
+// Validater function -----------------------------
+
+const isStringInputValid = (input) => (input ? true : false);
+
+const isEnumInputValid = (input) => {
+  return input == isActiveEnum.YES || input == isActiveEnum.NO;
+};
+
+const isDateValid = function (input) {
+  let numValue = Number(input);
+  if (!Number.isInteger(numValue)) return false;
+
+  if (numValue > 1990 && numValue < 2023) {
+    return true;
+  } else if (numValue > 1 || numValue < 12) {
+    return true;
+  } else if (numValue > 1 || numValue < 31) {
+    return true;
+  }
+  return false;
+};
+// Application Commands---------------------
+
 // Get the command the user wants to exexcute
 const command = process.argv[2].toLowerCase();
 const isActiveEnum = Object.freeze({
@@ -15,13 +60,11 @@ function listEmployees() {
   console.log(`Employee List ----------------------------`);
   console.log("");
 
-  for (let emp of employees) {
-    for (let property in emp) {
-      console.log(`${property}: ${emp[property]}`);
-    }
-    console.log("");
-    prompt("Press enter to continue...");
-  }
+  employees.forEach((e) => {
+    logEmployee(e);
+    prompt(`Press enter to continue...`);
+  });
+
   console.log(`Employee list completed`);
 }
 
@@ -45,68 +88,33 @@ function addEmployee(
     startDateDay
   );
 
-  employee.isActive = isActive == isActiveEnum.YES;
-  return employee;
+  employee.isActive = isActive;
+  const json = JSON.stringify(employee, null, 2);
+  console.log(`Employee: ${json}`);
 }
 
 function getUserInputEmployeeDetails() {
-  let firstName = prompt("First Name: ");
-  if (!firstName) {
-    console.error(`Invalid first name`);
-    process.exit(1);
-  }
+  let firstName = getInput("First Name: ", isStringInputValid);
 
-  let lastName = prompt("Last Name: ");
-  if (!lastName) {
-    console.error(`Invalid last name`);
-    process.exit(1);
-  }
+  let lastName = getInput("Last Name: ", isStringInputValid);
 
-  let startDateYear = prompt("Employee Start Year (1990-2023): ");
-  startDateYear = Number(startDateYear);
-  // Check if it is a valid integer
-  if (!Number.isInteger(startDateYear)) {
-    console.error(`Enter a valid start date year`);
-    process.exit(1);
-  }
-  // Check if the number is in the range
-  if (startDateYear < 1990 || startDateYear > 2023) {
-    console.error(`Enter a start date year within the correct range`);
-    process.exit(1);
-  }
+  let startDateYear = getInput(
+    "Employee Start Year (1990-2023): ",
+    isDateValid
+  );
 
-  let startDateMonth = prompt("Employee Start Date Month (1-12): ");
-  startDateMonth = Number(startDateMonth);
-  // Check if it is a valid integer
-  if (!Number.isInteger(startDateMonth)) {
-    console.error(`Enter a valid start date month`);
-    process.exit(1);
-  }
-  // Check if the number is in the range
-  if (startDateMonth < 1 || startDateMonth > 12) {
-    console.error(`Enter a start date month within the correct range`);
-    process.exit(1);
-  }
+  let startDateMonth = getInput(
+    "Employee Start Date Month (1-12): ",
+    isDateValid
+  );
 
-  let startDateDay = prompt("Employee Start Date Day (1-31): ");
-  startDateDay = Number(startDateDay);
-  // Check if it is a valid integer
-  if (!Number.isInteger(startDateDay)) {
-    console.error(`Enter a valid start date day`);
-    process.exit(1);
-  }
-  // Check if the number is in the range
-  if (startDateDay < 1 || startDateDay > 31) {
-    console.error(`Enter a start date day within the correct range`);
-    process.exit(1);
-  }
+  let startDateDay = getInput("Employee Start Date Day (1-31): ", isDateValid);
 
-  let isActive = prompt("Is employee active (0 or 1): ");
-  // Check if incorrect value was entered
-  if (isActive != isActiveEnum.YES && isActive != isActiveEnum.NO) {
-    console.error(`Enter 0 or 1 for employee active status`);
-    process.exit(1);
-  }
+  let isActive = getInput(
+    "Is employee active (0 or 1): ",
+    isEnumInputValid,
+    (i) => i == isActiveEnum.YES
+  );
 
   return [
     firstName,
@@ -116,6 +124,10 @@ function getUserInputEmployeeDetails() {
     startDateDay,
     isActive,
   ];
+}
+
+function searchById(id) {
+  return employees.find((e) => e.id === id);
 }
 
 switch (command) {
@@ -135,19 +147,28 @@ switch (command) {
       isActive,
     ] = getUserInputEmployeeDetails();
     // Output Employee JSON
-    const json = JSON.stringify(
-      addEmployee(
-        firstName,
-        lastName,
-        startDateYear,
-        startDateMonth,
-        startDateDay,
-        isActive
-      ),
-      null,
-      2
+    addEmployee(
+      firstName,
+      lastName,
+      startDateYear,
+      startDateMonth,
+      startDateDay,
+      isActive
     );
-    console.log(`Employee: ${json}`);
+    break;
+  case "search-by-id":
+    let id = getInput(
+      "Enter ID (+ve): ",
+      (i) => !Number.isInteger(i) && Number(i) >= 0,
+      Number
+    );
+    let emp = searchById(id);
+    
+    if (emp) {
+      logEmployee(emp);
+    } else {
+      console.log("No results...");
+    }
     break;
 
   default:
