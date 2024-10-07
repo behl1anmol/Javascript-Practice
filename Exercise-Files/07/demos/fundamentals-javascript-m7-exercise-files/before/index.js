@@ -130,6 +130,15 @@ function searchById(id) {
   return employees.find((e) => e.id === id);
 }
 
+function searchByName(firstNameSearchString, lastNameSearchString) {
+  const emps = employees.filter(
+    (e) =>
+      e.firstName.toLowerCase().includes(firstNameSearchString) ||
+      e.lastName.toLowerCase().includes(lastNameSearchString)
+  );
+  return emps.length > 0 ? emps : null;
+}
+
 switch (command) {
   case "list":
     listEmployees();
@@ -163,14 +172,38 @@ switch (command) {
       Number
     );
     let emp = searchById(id);
-    
+
     if (emp) {
       logEmployee(emp);
     } else {
       console.log("No results...");
     }
     break;
-
+  case "search-by-name":
+    const firstNameSearchString = getInput(
+      "Enter Name (First Name search string):",
+      isStringInputValid
+    );
+    const lastNameSearchString = getInput(
+      "Enter Name (Last Name search string):",
+      isStringInputValid
+    );
+    const emps = searchByName(
+      firstNameSearchString.toLowerCase(),
+      lastNameSearchString.toLowerCase()
+    );
+    if (emps) {
+      emps.forEach((e, idx) => {
+        console.log("");
+        console.log(
+          `Search Result ${idx + 1}---------------------------------`
+        );
+        logEmployee(e);
+      });
+    } else {
+      console.log("No results...");
+    }
+    break;
   default:
     console.log("Unsupported command. Exiting...");
     process.exit(1);
