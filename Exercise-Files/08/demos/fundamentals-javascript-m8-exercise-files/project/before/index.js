@@ -3,6 +3,38 @@ import fs from "node:fs/promises";
 
 //Global variables----------------------------------------------
 let employees = [];
+let currencyData;
+
+//Currency Data -----------------------------------------
+const getCurrencyConversionData = async () => {
+  const headers = new Headers();
+  headers.append("apiKey", "0254153c3712a9a0373f4a1ddaa620b1");
+  const apiKey = "0254153c3712a9a0373f4a1ddaa620b1";
+  const requestOptions = {
+    method: `GET`,
+    redirect: `follow`,
+    headers,
+  };
+
+  const result = await fetch(
+    `https://api.exchangeratesapi.io/v1/latest?access_key=${apiKey}`,
+    requestOptions
+  );
+  if (!result.ok) {
+    throw new Error(`Cannot fetch Currency Data`);
+  }
+  currencyData = await result.json();
+};
+
+const getSalary = (amountUSD, currency) => {
+  const amount =
+    currency === "USD" ? amountUSD : amountUSD * currencyData.rates[currency];
+  const formatter = Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency,
+  });
+  return formatter.format(amount);
+};
 
 // Loading and writing data to filesystem--------------------
 
@@ -32,8 +64,14 @@ let prompt = createPrompt();
 
 const logEmployee = (employee) => {
   Object.entries(employee).forEach((entry) => {
-    console.log(`${entry[0]}: ${entry[1]}`);
+    if (entry[0] != "salaryUSD" || entry[0] != "localCurrency") {
+      console.log(`${entry[0]}: ${entry[1]}`);
+    }
   });
+  console.log(`Salary USD: ${getSalary(employee.salaryUSD, "USD")}`);
+  console.log(
+    `Local Salary: ${getSalary(employee.salaryUSD, employee.localCurrency)}`
+  );
 };
 
 function getInput(promptText, validator, transformer) {
@@ -54,6 +92,11 @@ const getNextEmployeeID = () => {
 };
 
 // Validator functions ---------------------------------------------------
+
+const isCurrencyCodeValid = function (code) {
+  const currencyCodes = Object.keys(currencyData.rates);
+  return currencyCodes.indexOf(code) > -1;
+};
 
 const isStringInputValid = (input) => {
   return input ? true : false;
@@ -114,6 +157,14 @@ async function addEmployee() {
     "Is employee active (yes or no): ",
     isBooleanInputValid,
     (i) => i === "yes"
+  );
+  employee.salaryUSD = getInput(
+    "Annual salary in EUR: ",
+    isIntegerValid(10000, 1000000)
+  );
+  employee.localCurrency = getInput(
+    "Local currency {3 letter code}:",
+    isCurrencyCodeValid
   );
 
   employees.push(employee);
@@ -186,7 +237,7 @@ const main = async () => {
   }
 };
 
-loadData()
+Promise.all([loadData(), getCurrencyConversionData()])
   .then(main)
   .catch((err) => {
     console.error("Cannot complete startup.");
